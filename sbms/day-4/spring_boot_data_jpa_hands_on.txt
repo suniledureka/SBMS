@@ -1,0 +1,69 @@
+1) Implement all the methods of CrudRepository on a Project (Product ID, Product Name, Product Price)object
+
+2) Demonstrate implementation of Query Methods feature of Spring Data JPA
+   Query Methods - Search by containing text in Product Name, sorting, filter with starting text, greater than or lesser than priced products
+
+
+3) implement employee-management application with Data JPA CrudRepository
+
+
+4) An application requires the following features to be implemented with regards to country data. These features needs to be supported by implementing them as service using Spring Data JPA.
+
+> Find a country based on country code
+> Add new country
+> Update country
+> Delete country
+> Find list of countries matching a partial country name
+
+
+use schema.sql and data.sql
+
+Country data store contains - countryCode (String), countryName(String)
+
+create table country(co_code varchar(3) primary key, co_name varchar(50));
+
+insert into country (co_code, co_name) values ("AF", "Afghanistan");
+insert into country (co_code, co_name) values ("AL", "Albania");
+insert into country (co_code, co_name) values ("DZ", "Algeria");
+insert into country (co_code, co_name) values ("AS", "American Samoa");
+insert into country (co_code, co_name) values ("AD", "Andorra");
+insert into country (co_code, co_name) values ("AO", "Angola");
+insert into country (co_code, co_name) values ("AI", "Anguilla");
+insert into country (co_code, co_name) values ("AQ", "Antarctica");
+insert into country (co_code, co_name) values ("AG", "Antigua and Barbuda");
+insert into country (co_code, co_name) values ("AR", "Argentina");
+insert into country (co_code, co_name) values ("AM", "Armenia");
+insert into country (co_code, co_name) values ("AW", "Aruba");
+insert into country (co_code, co_name) values ("AU", "Australia");
+insert into country (co_code, co_name) values ("AT", "Austria");
+insert into country (co_code, co_name) values ("AZ", "Azerbaijan");
+insert into country (co_code, co_name) values ("BS", "Bahamas");
+insert into country (co_code, co_name) values ("BH", "Bahrain");
+insert into country (co_code, co_name) values ("BD", "Bangladesh");
+insert into country (co_code, co_name) values ("BB", "Barbados");
+insert into country (co_code, co_name) values ("BY", "Belarus");
+insert into country (co_code, co_name) values ("BE", "Belgium");
+insert into country (co_code, co_name) values ("BZ", "Belize");
+insert into country (co_code, co_name) values ("BJ", "Benin");
+insert into country (co_code, co_name) values ("CR", "Costa Rica");
+insert into country (co_code, co_name) values ("HR", "Croatia");
+insert into country (co_code, co_name) values ("CU", "Cuba");
+insert into country (co_code, co_name) values ("CW", "Curaçao");
+insert into country (co_code, co_name) values ("CY", "Cyprus");
+insert into country (co_code, co_name) values ("CZ", "Czech Republic");
+insert into country (co_code, co_name) values ("DK", "Denmark");
+insert into country (co_code, co_name) values ("DJ", "Djibouti");
+insert into country (co_code, co_name) values ("DM", "Dominica");
+insert into country (co_code, co_name) values ("DO", "Dominican Republic");
+insert into country (co_code, co_name) values ("EC", "Ecuador");
+insert into country (co_code, co_name) values ("EG", "Egypt");
+insert into country (co_code, co_name) values ("SV", "El Salvador");
+insert into country (co_code, co_name) values ("GQ", "Equatorial Guinea");
+insert into country (co_code, co_name) values ("ER", "Eritrea");
+insert into country (co_code, co_name) values ("EE", "Estonia");
+insert into country (co_code, co_name) values ("ET", "Ethiopia");
+
+
+
+
+

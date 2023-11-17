@@ -1,0 +1,1 @@
+create table country(co_code varchar(3) primary key, co_name varchar(50));
