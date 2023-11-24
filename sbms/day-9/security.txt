@@ -1,0 +1,786 @@
+Securing Spring Boot Application with Spring Security
+=====================================================
+
+-> Spring Boot is a mandatory requirement for every Java Developer
+
+Common Interview Questions on Spring Boot
+
+-> Security	- How did you implement security to your web application so that there won't be any security breaches in your application?
+
+-> Password	- How are you storing passwords in your application?  Users normally pass the email id and password.  How to store passwords, validate them, encode, decode them using Industry standard encryption algorithms
+
+Do you think that the password like admin@123 will be stored as it is in the DB?
+We need to perform some operations before storing the password in the DB
+
+-> Users and Roles	- How to maintain the user level security based on their roles and grants associated with them?
+
+Can every user access every page/functionality of your application or based on the roles the users will access the functionality - based on the roles
+
+How can we perform role based security?
+
+-> Multiple Logins	- How can I implement a mechanism where the user will login once only and start using my application?	With FB credentials we can login to FB from multiple devices	Gmail Credentials, Amazon Prime etc
+
+-> Fine Grained Security - How can I implement security at each level of my application using authorization rule?
+
+-> CSRF & CORS
+CSRF - Cross-Site Request Forgery      
+CORS – Cross Origin Resource Sharing is an HTTP-header based mechanism that allows a server to indicate any origins (domain, scheme, or port) other than its own from which a browser should permit loading resources
+
+What is CSRF attacks and CORS restrictions? How to overcome them?
+
+-> JWT & OAuth2	
+   What is JWT and OAuth2? How can I protect my application using them?
+
+-> Preventing Attacks	- How to prevent security attacks like Brute force, Stealing of Data, session fixation
+
+A brute force attack is a hacking method that uses trial and error to crack passwords, login credentials, and encryption keys. It is a simple yet reliable tactic for gaining unauthorized access to individual accounts and organizations' systems and networks.
+
+Every developer should know the security techniques that we need to implement in our application
+
+
+What is Security?
+----------------
+Security is for protecting your data and business logic inside our application
+Our company data - employee details, projects details
+
+ECommerce Site - Product Details, Reseller Details, Customer Details, Order Details etc
+
+Security is a Non Functional Requirement - No client will specifically asks that he need security
+
+Security From Development Phase - Security should be considered from development phase itself along with business logic (not at the last)
+
+Different Types of Security - Security for an application will be implemented in different ways like using firewalls, HTTPS, SSL, Authentication, Authorization etc
+
+Authentication Vs Authorization
+-------------------------------
+Basic thing of Security is Authentication & Authorization
+
+Authentication -> Verifies who you are: college student, company employee
+Authorization -> decides whether you have permission to access a resource:
+User XYZ can only read data	 User ABC can read and update data
+
+#1 in authentication - the identity of users are checked for providing the access to the system (implementing login functionality).  in authorization - user's authorities are checked for accessing the resources
+
+#2 authentication done before authorization           		
+   authorization always happens after authentication
+
+#3 authentication usually needs user's login details     	
+   authorization needs user's privileges or roles
+
+#4 if authentication fails usually we will get 401 error response (Unauthorized)
+   if autherization fails usually we will get 403 error response (Forbidden)
+
+for eaxmple - as a bank employee/ customer - in order to perform actions in the application we need to prove our identity
+in authorization - once logged into the application - my roles, authorities will decide what kind of actions I can do
+
+as an example - you want to travel in a flight - your Passport or Voter ID card is the Authentication and your ticket is authorization
+
+
+How does Spring MVC Work?
+DispatcherServlet acts as the front controller
+  -> Intercepts all requests
+  -> Routes to the Right Controller
+   Request ---> DispatcherServlet ----> Controller(s)
+
+
+How does Spring Security Work?
+
+Spring security intercepts all requests
+Spring security executes a series of filters - also called Spring Security Filter Chain
+   Request ---> Spring Security ---> DispatcherServlet ----> Controller(s)
+  
+
+Filters provide these features:
+    - Authentication: Is it a valid user? (Ex: BasicAuthenticationFilter)
+    - Authorization: Does the user have right access?(Ex: AuthorizationFilter)
+
+   Other Features:
+    - Cross-Origin Resource Sharing (CORS) - CorsFilter
+        Should you allow AJAX calls from other domains?
+        Ex: if you are building a fullstack application, you have the frontend deployed to one domain like React and the backend rest api deployed to another domain. the backend REST API should allow calls from the frontend  application which is running in the browser - this can be configured using CORS
+
+    - Cross Site Request Forgery (CSRF) - CsrfFilter
+       - typically a user session is created for you once you login to a site/web application, and a user session is typically identified by using a cookie in the browser, if you don't logout from that site and you go to a malicious web site - this site can make use of the previous authentication that you have - the cookie which is present in the browser. this vulnerability is known as CSRF. when we add spring security - CSRF is automatically enabled for any update/ delete requests
+
+	A malicious website making use of previous authentication on your website
+	Default: CSRF protection enabled for update requests - POST, PUT etc..
+
+Spring security provides a default Login Page, Logout Page
+	LogoutFilter, DefaultLoginPageGeneratingFilter, DefaultLogoutPageGeneratingFilter
+     Translating exceptions into proper Http Responses (ExceptionTranslationFilter)
+
+Order of filters is important (typical order is)
+  1: Basic Check Filters - CORS, CSRF, ..
+  2: Authentication Filters - do they have the correct credentials
+  3: Authorization Filters - do they have the right access to perform the right action on the right resource
+
+
+------- Practicals -----
+
+01.sb-security-app
+
+   WelcomeRestController
+add spring security dependency	- User Name: user    Password from console
+
+In Browser - Inspect > Network > All - /welcome?contine - Headers
+
+- Used by most web applications
+- Uses a Session Cookie    JSESSIONID: E2E693A57F6F7E4AC112A1BF4D40890A
+- Spring security enables form based authentication by default
+- Provides a default Login Page
+- Provides a default Logout Page
+- Provides a /logout URL  - http://localhost:8080/logout
+
+
+To provide our own username and password - in application.properties
+spring.security.user.name = sunil
+spring.security.user.password = sunil@123
+
+
+How does basic authentication work?
+
+ Base 64 encoded username and password is sent as request header
+  Authorization (header): Basic aW4yOG1pbnV0ZXM6ZHVtbXk=
+
+ DISADVANTAGE of Basic Authentication-> Easy Decoding
+ -> Basic Auth Authorization Header:
+     - Does NOT contain authorization information (user access, roles,..)
+     - Does NOT have Expiry Date
+
+
+CSRF - Cross Site Request Forgery
+
+-> you are logged-in to your bank's online platform; which creates a cookie and will be saved in your browser
+-> you open a malicious website without logging out from the bank's application
+-> other website may execute a bank transfer on your bank account without your knowledge using the cookie of bank in your system's browser
+-- this is called as CSRF
+
+
+How can you protect from CSRF?
+1) Synchronizer Token Pattern
+   - create a new token for each & every request
+   - spring security enables this by default
+   - to make any updates (POST, PUT, DELETE...), you need a CSRF token from the previous request
+
+
+02.sb-security-csrf-app
+
+record Product(Integer productId, String productName) {}
+
+@RestController
+public class ProductController {
+ private Logger logger = LoggerFactory.getLogger(getClass());
+ 
+ private static final List<Product> productsList = new ArrayList<Product>(List.of(new Product(101, "Mobile"), new   Product(102, "Computer"), new Product(103, "Laptop")));
+ 
+ @GetMapping("/products")
+ public List<Product> getAllProducts(){  return productsList; }
+ 
+ @GetMapping("/products/{pid}")
+ public Product getProductByProductId(@PathVariable Integer pid) {
+   Product product = productsList.stream().filter(prod -> prod.productId().equals(pid)).findFirst().orElse(null);
+   return product; 
+  }
+
+  @PostMapping("/products/new")
+  public void addNewProduct(@RequestBody Product product) {
+   productsList.add(product);
+   logger.info("saving new product {}", product);
+ }
+}
+
+
+Authorization : Basic encoded username & password
+GET http://localhost:8080/products - no issue
+GET http://localhost:8080/products/101 - no issue
+POST http://localhost:8080/products/new - failing error 401
+
+
+CSRF for REST API
+
+- by default Spring security creates a csrf token for all form based application
+- to try - run previous app http://localhost:8080/welcome
+   http://localhost:8080/logout   - view page source
+   -- delete csrf field and submit and see the error - (Inspect page)
+   -- try again /logout without deleting csrf node
+
+- create a new controller
+@RestController
+public class CSRFRestController {
+ @GetMapping("/csrf-token")
+ public CsrfToken retrieveCsrfToken(HttpServletRequest request) {
+   return (CsrfToken) request.getAttribute("_csrf");
+ }
+}
+   
+http://localhost:8080/csrf-token	 -- get the token
+
+POST http://localhost:8080/products/new
+New Header: X-CSRF-TOKEN  <csrf_token_value>			--- it works ----
+
+ 2: SameSite cookie (Set-Cookie: SameSite=Strict)  - another approach
+  -- this cookie will be sent only to that specific site, it will not be send to any other site. to enable it, in  application.properties   (from Spring Boot 2.6_     server.servlet.session.cookie.same-site=strict  
+
+   Depends on browser support
+
+Creating Spring Security Configuration to disable CSRF
+
+- SpringBootWebSecurityConfiguration (Spring Boot 2.x) class contains the default web security configuration
+- WebSecurityConfiguration for Spring Boot 3.x
+
+
+
+check in console for logs of "CSRF"
+
+-- create a new BasicSecurityConfiguration class
+
+package com.wipro.boot.security.configs;
+@Configuration
+public class BasicSecurityConfiguration {
+ @Bean
+ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+   //--- default configuration ----
+   http.authorizeHttpRequests(request -> request.anyRequest().authenticated());
+   http.csrf(csrf ->csrf.disable());
+   http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+   http.httpBasic(Customizer.withDefaults());
+   return http.build();   
+ }
+}  
+run the application - search for csrf in logs       **run post request without csrf header - and it works
+
+
+2) Same-Site Cookie (SameSite-Strict=Strict)
+in application.properties
+ server.servlet.session.cookie.same-site=strict
+
+
+default web security configuration details are available with 
+ - SpringBootWebSecurityConfiguration / WebSecurityConfigurerAdapter (SB 2.x)
+ - WebSecurityConfiguration (SB 3.2)
+
+
+Working with CORS
+-----------------
+- Cross Origin Resource Sharing
+- browsers do not allow AJAX calls to resources outside current origin
+- let us imagine, that we have a fullstack application, and your frontend is making a REST API call to a different domain (a different URL), typically our browser will not allow that kind of calls
+
+- Cross-Origin Resource Sharing (CORS) is a specification that allows you to configure which cross-domain requests are allowed
+
+- there are 2 approaches that we can follow
+ (1) Global Configuration  - applicable to all rest controllers/resources 
+   Configure addCorsMappings callback method in WebMvcConfigurer      (BasicSecurityConfiguration.java)
+
+/*--- global configuration for CORS ----*/
+	@Bean
+	public WebMvcConfigurer corsConfigurer() {
+	  return new WebMvcConfigurer() {
+	    public void addCorsMappings(CorsRegistry registry) {
+	      registry.addMapping("/**")
+	              .allowedMethods("*")
+	              .allowedOrigins("http://localhost:3000");
+	  } 
+	 };
+	}
+
+
+
+(2) Local Configuration
+  @CrossOrigin - Allow from all origins
+  @CrossOrigin(origins = "https://www.cognizant.com") - Allow from specific origin
+
+
+
+Storing User Credentials
+------------------------
+
+1) Default Credentials - which are generated by Spring Security 
+
+2) We can configure credentials in application.properties file
+   spring.security.user.name = sunil
+   spring.security.user.password = sunil@123
+
+3) We can configure user credentials with In-Memory of our application (In-Memory Credentials)
+
+4) We can configure user credentials in Database (JDBC Authentication)
+
+5) We can configure user credentials in LDAP Server (LDAP Authentication) - Lightweight Directory Access Protocol    Open protocol for directory services and authentication
+
+03.sb-security-in-memory-auth
+
+-- to configure multiple users -
+@Bean
+public UserDetailsService userDetailsService() {
+  var admin = User.withUsername("admin")
+     .password("{noop}12345")
+     .roles("ADMIN") //ROLE_ADMIN
+     .build();
+
+  var user = User.withUsername("sunil")
+     .password("{noop}12345")
+     .roles("USER") //ROLE_USER
+     .build();								//create an ENUM for User roles
+ return new InMemoryUserDetailsManager(user, admin);
+} 
+
+
+@Configuration
+public class AppConfig {
+	@Bean
+	public BCryptPasswordEncoder getEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+}
+
+
+Storing user credentials using JDBC	
+
+04.sb-security-jdbc-auth
+
+dependencies – Spring Web, Security, Spring Data JDBC (spring-boot-starter-jdbc), H2 driver
+
+spring.h2.console.enabled=true	
+spring.datasource.url=jdbc:h2:mem:userDB		chrome://restart
+
+http://localhost:8080/h2-console  - provide credentials - h2-console uses frames (view source) and 
+spring security disables frames by default -  to enable it		
+
+in filterChain() method of Security Configurationn class
+
+ http.csrf().disable();
+ http.headers().frameOptions().sameOrigin();
+
+
+open the source of org.springframework.security.core.userdetails.jdbc."JdbcDAOImpl" class and see the DEFAULT_USER_SCHEMA_DDL_LOCATION
+
+
+add a new method in BasicSecurityConfiguration class
+@Bean
+public DataSource dataSource() {
+ return new EmbeddedDatabaseBuilder()
+		.setType(EmbeddedDatabaseType.H2)
+		.addScript(JdbcDaoImpl.DEFAULT_USER_SCHEMA_DDL_LOCATION)
+		.build();
+}
+
+run the application - http://localhost:8080/h2-console
+
+-to populate users
+
+	@Bean
+	public UserDetailsService userDetailsService() {
+		var admin = User.withUsername("admin")
+				.password(encoder.encode("password"))
+				.roles("ADMIN", "USER") 
+				.build();
+		
+		var user =  User.withUsername("sunil")
+				.password("12345")
+				.passwordEncoder(pwd -> encoder.encode(pwd))				
+				.roles("USER") 
+				.build();
+		
+		UserDetailsManager users =  new JdbcUserDetailsManager(dataSource());
+		users.createUser(admin);
+		users.createUser(user);
+		
+		return users;
+      }
+
+run the application - http://localhost:8080/h2-console
+
+Storing BCrypt Encoded Passwords
+
+- PasswordEncoder - interface for performing one way transformation of a password
+
+@Bean
+public BCryptPasswordEncoder passwordEncoder() {
+ return new BCryptPasswordEncoder();
+}
+
+
+insert into users (username, password, enabled) values (?,?,?)
+
+
+MySQL -
+
+create table users(username varchar(50), password varchar(200), enabled int(1));
+create table authorities(username varchar(50), authority varchar(50));
+
+@Configuration
+public class SecurityConfiguration {
+	@Autowired
+	BCryptPasswordEncoder encoder;
+	
+	@Autowired
+	private DataSource dataSource;
+	
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.authorizeHttpRequests(request -> request.anyRequest().authenticated());
+		http.httpBasic(Customizer.withDefaults());
+		http.sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+		http.csrf(csrf -> csrf.disable());
+		return http.build();
+	}
+	
+	@Bean
+	public UserDetailsService configureUsers() {
+		UserDetails user1 = User.withUsername("sanjay")
+						.password(encoder.encode("12345"))					
+						.roles("ADMIN")
+						.build();
+		
+		var user2 = User.withUsername("praveen")
+						.password("12345")
+						.passwordEncoder(pwd -> encoder.encode(pwd))
+						.roles("USER")
+						.build();
+		
+		UserDetailsManager users = new JdbcUserDetailsManager(dataSource);
+		users.createUser(user1);
+		users.createUser(user2);
+		
+		return users;
+	}
+}
+
+--------------------------------------------------------------------------------------------------------------
+
+05.sb-security-auth
+
+--------- BankRestController.java ----------
+@RestController
+public class BankRestController {
+	@GetMapping("/home")
+	public String homePage() {	return "Welcome to State Bank of India";	}
+	
+	@GetMapping("/balance")
+	public String balancePage() {		return "This page shows customer's balance";	}	
+	
+	@GetMapping("/loan")
+	public String loanPage() {	return "This page shows customer's loan details (if any)";	}	
+	
+	@GetMapping("/statement")
+	public String statementPage() {  return "This page shows customer's bank statement";	}	
+	
+	@GetMapping("/care")
+	public String customerCarePage() {	return "Contact State Bank of India";	}
+}
+
+----- application.properties -------
+spring.security.user.name = sunil
+spring.security.user.password = sunil@123
+
+-- now to access any functionality we need to do login
+
+Project Requirement
+
+-- in a real-time scenario do you think to secure all the methods in the application or only some methods to be secured? -- we need to secure only important methods
+
+/home -- no need to secure; any one should be able to access
+/balance -- this endpoint should be secured
+/statement -- this endpoint should be secured
+/loan -- this endpoint should be secured
+/care - no need to secure -- open to everyone
+here out of 5 functionality - we need to secure 3 methods (endpoints)   how to customize the security?
+
+customize the requirement for  (above)
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {	
+ http.authorizeHttpRequests(request -> request.requestMatchers("/home","/care").permitAll()
+					      .anyRequest().authenticated());
+ http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+ http.csrf().disable();
+ http.headers().frameOptions().sameOrigin();
+ http.httpBasic();
+ return http.build();
+} --- test it
+
+	@Bean
+	public UserDetailsService userDetailsService() {
+		var admin = User.withUsername("admin")
+						.password(encoder.encode("password"))
+						.roles("ADMIN", "USER") 
+						.build();
+		
+		var user =  User.withUsername("sunil")
+				.password("12345")
+				.passwordEncoder(pwd -> encoder.encode(pwd))				
+				.roles("USER") 
+				.build();
+		
+		UserDetailsManager users =  new JdbcUserDetailsManager(dataSource());
+		users.createUser(admin);
+		users.createUser(user);
+		
+		return users;
+	}	
+
+
+
+06.sb-security-authorization
+
+@RestController
+public class BankRestController {
+	@GetMapping("/home")
+	public String homePage() {		return "Welcome to State Bank of India";	}	
+
+	@GetMapping("/admin")
+	public String adminPage() {		return "This page is for Administrators";	}	
+	@GetMapping("/manager")
+	public String managerPage() {		return "This page is for Managers";	}	
+	
+	@GetMapping("/clerk")
+	public String clerkPage() {		return "This page is for Clerks";	}
+	
+	@GetMapping("/cashier")
+	public String cashierPage() {		return "This page is for Cashiers";	}	
+	
+	@GetMapping("/customer")
+	public String customerPage() {		return "This page is for Customers";	}	
+	
+	@GetMapping("/care")
+	public String customerCarePage() {		return "Contact State Bank of India";	}
+}
+
+
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.authorizeHttpRequests(request ->{ 
+			request.requestMatchers("/home","/care")
+					.permitAll()
+					.requestMatchers("/admin").hasRole("ADMIN")
+					.requestMatchers("/manager").hasAnyRole("ADMIN","MANAGER")
+					.requestMatchers("/clerk").hasAnyRole("ADMIN","MANAGER","CLERK")
+					.anyRequest()
+					.authenticated();
+		});
+		
+		http.csrf().disable();
+		http.headers().frameOptions().sameOrigin();
+		http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));			
+		http.httpBasic();
+		
+		return http.build();
+	}	
+
+
+
+Spring Boot Security - OAuth2
+-----------------------------
+
+Let us say you are having a website and you want to provide the security, we need to make the user to login; 
+
+We can have our own data base to store the user details, our own ways to verify the user. 
+Here the issue is , we are storing the user details in our DB – we need to protect it and more over will be difficult to manage it. If someone hacks it - then we are responsible
+
+Second issue is – a user/consumer may be using social networking logins like Facebook login, Gmail login etc
+Can we have Gmail login for our web site; we don’t need to manage the data		
+
+Google for "OAuth2"
+
+OAuth (Open Authorization) is a simple way to publish and interact with protected data.
+It is an open standard for token-based authentication and authorization on the Internet. 
+It allows an end user's account information to be used by third-party services, such as Facebook, without exposing the user's password.
+
+What actually is OAuth?	
+
+Consider the use case of Quora / stackoverflow.com. 	Go to Quora.com.
+If you are a new user you need to signup. Quora wants your basic information like what is your first name, lastname, age, birthday etc , these details are saved/stored with google / facebook
+Suppose you "Continue with Google" - you are allowing or authorizing Google to share your data with Quora. This authorizing is done with OAuth2.  	Here you have in no way shared your credentials with Quora.
+
+In the above example of Quora, we have 3 actors-
+> Resource Owner - This is the user who wants to sign up using Quora (we).
+> Client Application - This will be Quora
+> Resource Server - This will be Gmail or Facebook.
+> Authorization Server - The resource server hosts the protected user accounts, and the authorization server verifies the identity of the user then issues access tokens to the application.
+
+Important Concepts:
+	Resource owner: You (Person owning the google drive files)
+	Client application: management application
+	Resource server: Contains the resources that are being accessed - Google Drive
+	Authorization server: Google OAuth Server
+
+
+
+07.sb-security-oauth2
+Dependencies:  Spring Web,  OAuth2 Client
+Create WelcomeRestController for /welcome
+
+
+Google for "Google Cloud"	
+cloud.google.com	> Login >  Go to Console
+> Create a New Project & Select the Project		
+> API & Services	 	
+> OAuth Consent Screen    
+	User Type: External > Create		
+	Application: CTS	> Save	
+	Application logo 	
+	Add or Remove Scopes:  email & profile
+
+> Create Credentials  - OAuth Client ID
+Application Type: Web application
+Name: CTS App		
+Authorized redirect URIs: http://localhost:8080/login/oauth2/code/google   
+Redirect: http://localhost:8080/login/oauth2/code/google	> Create	Copy Client ID and Client Secret
+
+
+in application.properties
+
+spring.security.oauth2.client.registration.google.client-id=<client_id>
+spring.security.oauth2.client.registration.google.client-secret=<client_secret>
+spring.security.oauth2.client.registration.google.redirect-uri= http://localhost:8080/login/oauth2/code/google
+
+
+
+@Configuration
+public class BasicSecurityConfiguration {
+ @Bean
+ //@Order(SecurityProperties.BASIC_AUTH_ORDER)
+ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {	
+   http.authorizeHttpRequests(request -> request.anyRequest().authenticated());
+   http.oauth2Login();	// http.oauth2Login(Customizer.withDefaults());	   
+   return http.build(); 
+}
+
+
+@RestController
+public class WelcomeRestController {	
+	@GetMapping("/")
+	public String welcomeMessage(Authentication authentication) {
+		System.out.println(authentication);
+		System.out.println(authentication.getPrincipal());
+		return "Hello World";
+	}
+}
+
+
+
+JWT  jwt.io
+
+-> JWT stands for JSON Web Token.
+
+-> It is a token implementation which will be in the JSON format and designed to use for the web requests
+
+-> JWT is most common and favorite token type that many systems use these days due to its features and advantages
+Eg: while doing an online transfer of amount - OTP is required. We can consider OTP as a token
+
+-> JWT Token can be used in both Authentication & Authorization scenario
+
+
+JSON Web Tokens are an open, industry standard method for representing claims security between two parties. 
+jwt.io allows you to decode, verify and generate JWT
+
+JWT is the best secured way to communicate between the client and server and the advantages of using JWT is that it completely follows stateless authentication mechanism - it means all the user inputs or state is never saved in server memory or cookies.    
+Why JWT? Traditional Approach
+
+ 
+
+JWT contains username and  password in an encrypted manner with some other details
+
+ 
+Sample JWT
+
+A JWS - JSON Web Signature (the most common type of JWT) contains three parts separated by a dot ( . ). The first two parts (the "header" and "payload") are Base64-URL encoded JSON, and the third is a cryptographic signature
+
+-> A JWT token has 3 parts which are separated by dot (.)
+Sample JWT token
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+
+1) Header - represents header information which contains name of algorithm & type of token
+2) Payload- claims information will be available here details)
+   (registered claims / public claims / private claims)
+3) Signature - encoded header + encoded payload + secret key
+
+Decoded JWT
+Header 
+{
+  "alg": "HS256",
+  "typ": "JWT"
+}
+Refer: https://jwt.io/       https://jwt.io/introduction 
+We can decode JWT Token using https://jwt.io/#debugger-io
+
+alg – algorithm    typ – type of token    sub – subject    iat – Issued at
+
+JWT Work Flow
+
+Practicals -> Spring Boot Application with JWT Token
+
+-> In our spring boot application we have 2 endpoints 
+    1) /hello	    2) /token
+
+---> /hello endpoint is token based secured endpoint; if token is valid then only /hello endpoint will be executed
+
+---> /token endpoint is used for getting JWT token based on user credentials.  If credentials are valid then only token will be generated 
+
+Note : 
+username: admin
+password: admin@123
+
+
+
+
+New Project -> sb-security-jwt-app
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+https://www.bezkoder.com/websecurityconfigureradapter-deprecated-spring-boot/
+https://www.codejava.net/frameworks/spring-boot/fix-websecurityconfigureradapter-deprecated
+from boot 2.7.x
+
+Reference: 
+1) https://reflectoring.io/spring-security/
+2) https://www.bezkoder.com/spring-boot-security-jwt/
+
+
+@Configuration
+public class SecurityConfig {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http.authorizeRequests()
+			.antMatchers("/home","/care")
+			.permitAll()
+			.antMatchers("/balance","/loan","/statement")
+			.authenticated()
+			.and().formLogin()
+			.and().httpBasic();
+		
+		return http.build();
+	}	
+}
+
+
+
+@Configuration
+public class BasicSecurityConfiguration {
+ @Bean
+ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {	
+   http.authorizeHttpRequests(request -> request.requestMatchers("/home","/care").permitAll()
+	.anyRequest().authenticated());
+   http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+   http.csrf().disable();
+   http.headers().frameOptions().sameOrigin();
+   http.httpBasic();
+   return http.build();
+}
+
+
