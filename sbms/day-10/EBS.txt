@@ -1,8 +1,5 @@
 Deploying a Spring Boot Application on AWS Using AWS Elastic Beanstalk
 
-https://768121720918.signin.aws.amazon.com/console
-        Sunil.Ozhakal
-        11Sunil_22
 
 
 Elastic Beanstalk helps to quickly deploy applications with a very simple interface, We can deploy applications to tomcat, can run Java applications, Python applications etc
